@@ -17,13 +17,13 @@ import java.util.ArrayList;
 
 public class Indexer
 {
-    public static void main(String args[])
+    public static void main(String args[]) throws IOException
     {
         Indexer indexer = new Indexer();
         indexer.indexDocuments();
     }
 
-    private void indexDocuments()
+    private void indexDocuments() throws IOException
     {
         // REMOVE PREVIOUSLY GENERATED INDEX (DONE)
         try
@@ -34,8 +34,8 @@ public class Indexer
         }
 
         // LOAD HTML DOCUMENTS (TODO)
+        // DONE!
         ArrayList<Document> documents = getHTMLDocuments();
-
 
         // CONSTRUCT INDEX (TODO)
         // - Firstly, create Analyzer object (StandardAnalyzer).
@@ -45,11 +45,18 @@ public class Indexer
         // - Construct IndexWriter (you can use FSDirectory.open and Paths.get + Constants.index_dir
         // - Add documents to the index
         // - Commit and close the index.
-
-        // ----------------------------------
         
-        // ----------------------------------
-
+        StandardAnalyzer oStandardAnalyzer = new StandardAnalyzer();
+        IndexWriterConfig oIndexWriterConfig = new IndexWriterConfig( oStandardAnalyzer );
+        IndexWriter oIndexWriter = new IndexWriter( FSDirectory.open( Paths.get( Constants.index_dir ) ), oIndexWriterConfig);
+        
+        for( Document oDocument : documents )
+        {
+            oIndexWriter.addDocument( oDocument );
+        }
+        
+        oIndexWriter.commit();
+        oIndexWriter.close();
     }
 
 
@@ -58,23 +65,24 @@ public class Indexer
         // This method is finished. Find getHTMLDocument
         File dir = new File("pages");
         File[] files = dir.listFiles();
-        if (files != null)
+        if( files != null )
         {
             ArrayList<Document> htmls = new ArrayList<>(files.length);
             for (int id = 0; id < files.length; id++)
             {
                 System.out.println("Loading "+ files[id].getName());
-                // TODO finish getHTML document
-                htmls.add(getHTMLDocument("pages/" + files[id].getName(), id));
+                // TODO finish getHTMLdocument
+                htmls.add( getHTMLDocument( "pages/" + files[id].getName(), id ) );
             }
+            
             return htmls;
         }
         return null;
     }
 
-    private Document getHTMLDocument(String path, int id)
+    private Document getHTMLDocument( String path, int id )
     {
-        File file = new File(path);
+        File file = new File( path );
         Document document = new Document();
 
         /*Expert: directly create a field for a document.
@@ -114,42 +122,49 @@ public class Indexer
         // IMPORTANT NOTE: use static fields of Constants class to get
         // the keys of the fields (e.g., Constants.id) !
         // ----------------------------------
-       
-        // ----------------------------------
-
+        // DONE!
+        StoredField oIdStoredField = new StoredField( Constants.id, id );
+        
         // TODO create a field that is indexed but not stored
         // and contains document's content
         // for this purpose, extract text from the document
         // using Tika ( use getTextFromHTMLFile() <- this method is finished )
         // ----------------------------------
-       
-        // ----------------------------------
-
+        // DONE!
+        File oFile = new File(path);
+        String oGetTextHTML = getTextFromHTMLFile( oFile );
+        TextField oContentTextField = new TextField( Constants.content, new StringReader( oGetTextHTML ) );
+        
         // TODO create a field that is stored and indexed
         // and contains file name
         // ----------------------------------
-       
+        //DONE!
+        StoredField oFileNameStoredField = new StoredField( Constants.filename, oFile.getName() );
+        
         // ----------------------------------
 
         // TODO create an INT field (IntPoint) that is indexed
         // and contains file size (bytes, .length())
         // ----------------------------------
-
+        // DONE!
+        IntPoint oFileSizeIntPoint = new IntPoint( Constants.filesize_int, ( int ) oFile.length() );
+        
         // ----------------------------------
         // //TODO IntPoint is not stored but we want to a file size
         // ... so add another field (StoredField) that stores file size
         // ----------------------------------
+        // DONE!
+        StoredField oFileSizeStoredField = new StoredField( Constants.filesize, oFile.length() );
 
-        // ----------------------------------
-
-        // TODO add fields to the document object
-        // ----------------------------------
-  
-        // ----------------------------------
-
+        // TODO add fields to the document object 
+        // DONE!
+        document.add( oIdStoredField );
+        document.add( oContentTextField );
+        document.add( oFileNameStoredField );
+        document.add( oFileSizeIntPoint );
+        document.add( oFileSizeStoredField );        
 
         return document;
-
     }
 
     // (DONE)
