@@ -35,7 +35,7 @@ public class Indexer
 
         // LOAD HTML DOCUMENTS (TODO)
         // DONE!
-        ArrayList<Document> documents = getHTMLDocuments();
+        ArrayList<Document> oDocuments = getHTMLDocuments();
 
         // CONSTRUCT INDEX (TODO)
         // - Firstly, create Analyzer object (StandardAnalyzer).
@@ -50,7 +50,7 @@ public class Indexer
         IndexWriterConfig oIndexWriterConfig = new IndexWriterConfig( oStandardAnalyzer );
         IndexWriter oIndexWriter = new IndexWriter( FSDirectory.open( Paths.get( Constants.index_dir ) ), oIndexWriterConfig);
         
-        for( Document oDocument : documents )
+        for( Document oDocument : oDocuments )
         {
             oIndexWriter.addDocument( oDocument );
         }
@@ -82,9 +82,6 @@ public class Indexer
 
     private Document getHTMLDocument( String path, int id )
     {
-        File file = new File( path );
-        Document document = new Document();
-
         /*Expert: directly create a field for a document.
         Most users should use one of the sugar subclasses:
 
@@ -139,7 +136,8 @@ public class Indexer
         // and contains file name
         // ----------------------------------
         //DONE!
-        StoredField oFileNameStoredField = new StoredField( Constants.filename, oFile.getName() );
+        String oFileNameString = oFile.getName();
+        StoredField oFileNameStoredField = new StoredField( Constants.filename, oFileNameString );
         
         // ----------------------------------
 
@@ -158,6 +156,7 @@ public class Indexer
 
         // TODO add fields to the document object 
         // DONE!
+        Document document = new Document();
         document.add( oIdStoredField );
         document.add( oContentTextField );
         document.add( oFileNameStoredField );

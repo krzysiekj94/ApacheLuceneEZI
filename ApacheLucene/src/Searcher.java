@@ -10,6 +10,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.BytesRef;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -17,19 +18,18 @@ import java.nio.file.Paths;
 public class Searcher
 {
 
-    public static void main(String args[])
+    public static void main(String args[]) throws IOException, ParseException
     {
         // Load the previously generated index (DONE)
         IndexReader reader = getIndexReader();
-        assert reader != null;
+        assert( reader != null );
 
         // Construct index searcher (DONE)
-        IndexSearcher indexSearcher = new IndexSearcher(reader);
+        IndexSearcher oIndexSearcher = new IndexSearcher( reader );
         // Standard analyzer - might be helpful
-        Analyzer analyzer = new StandardAnalyzer();
+        Analyzer oAnalyzer = new StandardAnalyzer();
 
         // TODO your task is to construct several queries and seek for relevant documents
-
         // TERM QUERY
         // A Query that matches documents containing a term.
         // This may be combined with other terms with a BooleanQuery.
@@ -44,8 +44,12 @@ public class Searcher
         {
             // --------------------------------------
             // COMPLETE THE CODE HERE
-            System.out.println("1) term query: mammal (CONTENT)");
-         
+        	BytesRef oMammalBytesRef = oAnalyzer.normalize( Constants.content, queryMammal );
+        	String oMammalNormalizedString = oMammalBytesRef.utf8ToString();
+        	Term oMammalTerm = new Term( Constants.content, oMammalNormalizedString );
+        	tq1 = new TermQuery( oMammalTerm ); 
+        	System.out.println("1) term query: mammal (CONTENT)");
+        	printResultsForQuery( oIndexSearcher, tq1 );
             // --------------------------------------
         }
 
@@ -55,8 +59,12 @@ public class Searcher
         TermQuery tq2;
         {
             // --------------------------------------
-            System.out.println("2) term query bird (CONTENT)");
-        
+        	BytesRef oBirdBytesRef = oAnalyzer.normalize( Constants.content, queryBird );
+        	String oBirdNormalizedString = oBirdBytesRef.utf8ToString();
+        	Term oBirdTerm = new Term( Constants.content, oBirdNormalizedString );
+        	tq2 = new TermQuery( oBirdTerm );   
+        	System.out.println("2) term query bird (CONTENT)");
+        	printResultsForQuery( oIndexSearcher, tq2 );
             // --------------------------------------
         }
 
@@ -70,8 +78,16 @@ public class Searcher
         // Boolean query
         {
             // --------------------------------------
+        	
+        	BooleanClause oBooleanClauseMamal = new BooleanClause( tq1,BooleanClause.Occur.FILTER );
+        	BooleanClause oBooleanClauseBird = new BooleanClause( tq2,BooleanClause.Occur.FILTER );
+        	BooleanQuery.Builder oBuilderBooleanQuery = new BooleanQuery.Builder();
+        	oBuilderBooleanQuery.add( oBooleanClauseMamal );
+        	oBuilderBooleanQuery.add( oBooleanClauseBird );
+        	BooleanQuery oBooleanQuery = oBuilderBooleanQuery.build();
+        	oBuilderBooleanQuery.setMinimumNumberShouldMatch( 1 );
             System.out.println("3) boolean query (CONTENT): mammal or bird");
-       
+            printResultsForQuery( oIndexSearcher, oBooleanQuery );
             // --------------------------------------
         }
 
@@ -80,8 +96,9 @@ public class Searcher
         // Use IntPoint.newRangeQuery.
         {
             // --------------------------------------
-            System.out.println("4) range query: file size in [0b, 1000b]");
-          
+            Query oQueryFileSize = IntPoint.newRangeQuery( Constants.filesize_int, 0, 1000 );
+        	System.out.println("4) range query: file size in [0b, 1000b]");
+        	printResultsForQuery( oIndexSearcher, oQueryFileSize );
             // --------------------------------------
         }
 
@@ -89,8 +106,10 @@ public class Searcher
         // For this reason, construct PrefixQuery.
         {
             // --------------------------------------
-            System.out.println("5) Prefix query (FILENAME): ant");
-         
+        	Term oAntTerm = new Term( Constants.filename, "ant" );
+            PrefixQuery oAntPrefixQuery = new PrefixQuery( oAntTerm );
+        	System.out.println("5) Prefix query (FILENAME): ant");
+        	printResultsForQuery( oIndexSearcher, oAntPrefixQuery );
             // --------------------------------------
         }
 
@@ -98,10 +117,11 @@ public class Searcher
         // Construct a WildcardQuery object. Look for documents
         // which contain a term "eat?" "?" stand for any letter (* for a sequence of letters).
         {
-            // --------------------------------------
-            System.out.println("6) Wildcard query (CONTENT): eat?");
-    
-            // --------------------------------------
+           // --------------------------------------
+           WildcardQuery oWildcardQuery = new WildcardQuery( new Term( Constants.content, "eat?" ) );
+           System.out.println("6) Wildcard query (CONTENT): eat?");
+       		printResultsForQuery( oIndexSearcher, oWildcardQuery );
+           // --------------------------------------
         }
 
         // TODO build a fuzzy query for a word "mamml" (use FuzzyQuerry).
@@ -109,8 +129,9 @@ public class Searcher
         // Which documents have been found?
         {
             // --------------------------------------
-            System.out.println("7) Fuzzy querry (CONTENT): mamml?");
-     
+            FuzzyQuery oMammalFuzzyQuery = new FuzzyQuery(  new Term( Constants.content, "mamml?" ) );
+        	System.out.println("7) Fuzzy querry (CONTENT): mamml?");
+        	printResultsForQuery( oIndexSearcher, oMammalFuzzyQuery );
             // --------------------------------------
         }
 
@@ -128,16 +149,17 @@ public class Searcher
         String queryP4 = "(\"nocturnal life\"~10) OR bat";
         String queryP5 = "(\"nocturnal life\"~10) OR (\"are nocturnal\"~10)";
         // Select some query:
-        String selectedQuery = queryP1;
+        String selectedQuery = queryP5;
         // Complete the code here, i.e., build query parser object, parse selected query
         // to query object, and find relevant documents. Analyze the outcomes.
         {
             // --------------------------------------
-            System.out.println("8) query parser = " + selectedQuery);
-     
-            // --------------------------------------
+        	QueryParser oQueryParser = new QueryParser( Constants.content, oAnalyzer );
+        	Query oQueryParse = oQueryParser.parse( selectedQuery );
+        	System.out.println("8) query parser = " + selectedQuery);
+        	printResultsForQuery( oIndexSearcher, oQueryParse );
+        	// --------------------------------------
         }
-
 
         try
         {
@@ -148,7 +170,7 @@ public class Searcher
         }
     }
 
-    private static void printResultsForQuery(IndexSearcher indexSearcher, Query q)
+    private static void printResultsForQuery(IndexSearcher indexSearcher, Query q) throws IOException
     {
         // TODO finish this method
         // - use indexSearcher to search for documents that
@@ -162,9 +184,23 @@ public class Searcher
         // You may use indexSearcher to get a Document object for some docId (ScoreDoc)
         // and use document.get(name of the field) to get the value of id, filename, etc.
 
-        // --------------------------------
-      
-        // --------------------------------
+        TopDocs oTopDocs = indexSearcher.search( q, Constants.top_docs );
+        Document oDocument = null;
+        String oStringBuilder = "";
+        
+        for( ScoreDoc oScoreDoc : oTopDocs.scoreDocs )
+        {
+        	oDocument = indexSearcher.doc( oScoreDoc.doc );
+        	oStringBuilder = "";
+        	oStringBuilder += oScoreDoc.score;
+        	oStringBuilder += " : ";
+        	oStringBuilder += oDocument.get( Constants.filename ) + " ";
+        	oStringBuilder += oDocument.get( Constants.id ) + " ";
+        	oStringBuilder += oDocument.get( Constants.content ) + " ";
+        	oStringBuilder += oDocument.get( Constants.filesize ) + "b";
+        	
+        	System.out.println( oStringBuilder );
+        }
     }
 
     private static IndexReader getIndexReader()
