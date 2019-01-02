@@ -137,7 +137,7 @@ public class Indexer
         // ----------------------------------
         //DONE!
         String oFileNameString = oFile.getName();
-        StoredField oFileNameStoredField = new StoredField( Constants.filename, oFileNameString );
+        TextField oFileNameTextField = new TextField( Constants.filename, oFileNameString, Field.Store.YES );
         
         // ----------------------------------
 
@@ -159,7 +159,7 @@ public class Indexer
         Document document = new Document();
         document.add( oIdStoredField );
         document.add( oContentTextField );
-        document.add( oFileNameStoredField );
+        document.add( oFileNameTextField );
         document.add( oFileSizeIntPoint );
         document.add( oFileSizeStoredField );        
 

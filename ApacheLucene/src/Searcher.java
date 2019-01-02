@@ -120,7 +120,7 @@ public class Searcher
            // --------------------------------------
            WildcardQuery oWildcardQuery = new WildcardQuery( new Term( Constants.content, "eat?" ) );
            System.out.println("6) Wildcard query (CONTENT): eat?");
-       		printResultsForQuery( oIndexSearcher, oWildcardQuery );
+       	   printResultsForQuery( oIndexSearcher, oWildcardQuery );
            // --------------------------------------
         }
 
