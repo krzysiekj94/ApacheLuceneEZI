@@ -79,8 +79,8 @@ public class Searcher
         {
             // --------------------------------------
         	
-        	BooleanClause oBooleanClauseMamal = new BooleanClause( tq1,BooleanClause.Occur.FILTER );
-        	BooleanClause oBooleanClauseBird = new BooleanClause( tq2,BooleanClause.Occur.FILTER );
+        	BooleanClause oBooleanClauseMamal = new BooleanClause( tq1, BooleanClause.Occur.SHOULD );
+        	BooleanClause oBooleanClauseBird = new BooleanClause(  tq2, BooleanClause.Occur.SHOULD );
         	BooleanQuery.Builder oBuilderBooleanQuery = new BooleanQuery.Builder();
         	oBuilderBooleanQuery.add( oBooleanClauseMamal );
         	oBuilderBooleanQuery.add( oBooleanClauseBird );
